@@ -1,0 +1,12 @@
+export { CreateRoleDto } from './create-role.dto';
+export { UpdateRoleDto } from './update-role.dto';
+export { CreatePermissionDto } from './create-permission.dto';
+export { UpdatePermissionDto } from './update-permission.dto';
+export { CreateActionDto } from './create-action.dto';
+export { UpdateActionDto } from './update-action.dto';
+export { CreateSourceDto } from './create-source.dto';
+export { UpdateSourceDto } from './update-source.dto';
+export { AssignUserRoleDto } from './assign-user-role.dto';
+export { AssignRolePermissionDto } from './assign-role-permission.dto';
+export { AssignPermissionActionDto } from './assign-permission-action.dto';
+export { AssignPermissionSourceDto } from './assign-permission-source.dto';
