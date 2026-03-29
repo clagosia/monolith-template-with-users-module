@@ -34,11 +34,11 @@ export class UserCredential {
   })
   providerType: string;
 
-  @Column({ name: 'password_reset_token', nullable: true })
-  passwordResetToken: string;
+  @Column({ name: 'password_reset_token', type: 'varchar', nullable: true })
+  passwordResetToken: string | null;
 
-  @Column({ name: 'password_reset_expires', nullable: true, type: 'timestamp' })
-  passwordResetExpires: Date;
+  @Column({ name: 'password_reset_expires', type: 'datetime', nullable: true })
+  passwordResetExpires: Date | null;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;
@@ -47,5 +47,5 @@ export class UserCredential {
   updatedAt: Date;
 
   @DeleteDateColumn({ name: 'deleted_at' })
-  deletedAt: Date;
+  deletedAt: Date | null;
 }

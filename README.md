@@ -55,7 +55,7 @@ src/
 ## Prerequisites
 
 - Node.js >= 18
-- PostgreSQL (or use the included docker-compose)
+- PostgreSQL (or use the included docker-compose, or use **Mock DB mode** for zero-setup)
 
 ## Getting Started
 
@@ -85,7 +85,7 @@ DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=postgres
 DB_PASSWORD=postgres
-DB_DATABASE=monolith_db
+DB_NAME=monolith_template
 JWT_SECRET=your-super-secret-key
 JWT_EXPIRATION=1h
 APP_PORT=3000
@@ -107,6 +107,99 @@ npm run start:dev
 npm run build
 npm run start:prod
 ```
+
+## Mock Database Mode (No PostgreSQL Required)
+
+For quick exploration or local development without setting up PostgreSQL, the template includes a **mock database mode** that uses SQLite. It comes with a seed script that pre-populates the database with sample users, roles, permissions, actions, and sources.
+
+### Quick Start (one command)
+
+```bash
+# Seeds the SQLite DB and starts the server in watch mode
+npm run mock
+```
+
+The server starts at `http://localhost:3000` with these pre-seeded accounts:
+
+| Username  | Password      | Role    | Description                          |
+|-----------|---------------|---------|--------------------------------------|
+| `admin`   | `password123` | admin   | Full system access                   |
+| `manager` | `password123` | manager | User and report management           |
+| `viewer`  | `password123` | viewer  | Read-only access                     |
+
+### Step-by-Step
+
+If you prefer to run seed and server separately:
+
+```bash
+# 1. Seed the mock database
+npm run seed:mock
+
+# 2. Start the server with mock DB
+npm run start:mock
+```
+
+### Try the API
+
+Once the mock server is running, you can test the endpoints:
+
+```bash
+# Login as admin
+curl -s -X POST http://localhost:3000/auth/login \
+  -H "Content-Type: application/json" \
+  -d '{"username": "admin", "password": "password123"}' | jq .
+
+# Copy the accessToken from the response, then:
+TOKEN="<paste-access-token-here>"
+
+# List all users
+curl -s http://localhost:3000/users -H "Authorization: Bearer $TOKEN" | jq .
+
+# List all roles
+curl -s http://localhost:3000/access-control/roles -H "Authorization: Bearer $TOKEN" | jq .
+
+# List all permissions (with actions and sources)
+curl -s http://localhost:3000/access-control/permissions -H "Authorization: Bearer $TOKEN" | jq .
+
+# Create a new user
+curl -s -X POST http://localhost:3000/auth/register \
+  -H "Content-Type: application/json" \
+  -d '{"username": "newuser", "password": "securepass", "firstName": "New", "lastName": "User", "email": "new@example.com"}' | jq .
+```
+
+### Seeded RBAC Structure
+
+The seed script creates the following access control hierarchy:
+
+```
+Roles:
+  admin   --> manage_users, manage_roles, view_reports, manage_settings
+  manager --> manage_users, view_reports
+  viewer  --> view_reports, view_users
+
+Permissions:
+  manage_users    --> Actions: [CREATE, READ, UPDATE, DELETE]  Sources: [users]
+  manage_roles    --> Actions: [CREATE, READ, UPDATE, DELETE]  Sources: [roles]
+  view_reports    --> Actions: [READ]                          Sources: [reports]
+  manage_settings --> Actions: [CREATE, READ, UPDATE, DELETE]  Sources: [settings]
+  view_users      --> Actions: [READ]                          Sources: [users]
+```
+
+### Available Mock Scripts
+
+| Script            | Description                                            |
+|-------------------|--------------------------------------------------------|
+| `npm run mock`    | Seed + start server (all-in-one)                       |
+| `npm run seed:mock` | Seed the SQLite database only                        |
+| `npm run start:mock` | Start the server with SQLite (watch mode)           |
+| `npm run seed`    | Seed using the default PostgreSQL connection           |
+
+### Notes
+
+- The mock database is stored at `./mock.sqlite` in the project root. Delete it to reset.
+- Mock mode uses `synchronize: true` so the schema is auto-created on startup.
+- The seed script is idempotent -- running it multiple times will not create duplicates.
+- You can also seed your PostgreSQL database with the same data using `npm run seed`.
 
 ## API Endpoints
 
