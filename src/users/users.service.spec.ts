@@ -1,8 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ConflictException, NotFoundException } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { User } from './entities/user.entity';
+import {
+  UserNotFoundError,
+  UserOrEmailConflictError,
+  UsernameConflictError,
+  EmailConflictError,
+} from '../common/errors';
 
 const mockUser: User = {
   id: '550e8400-e29b-41d4-a716-446655440000',
@@ -67,11 +72,11 @@ describe('UsersService', () => {
       expect(mockRepository.save).toHaveBeenCalled();
     });
 
-    it('should throw ConflictException if username or email exists', async () => {
+    it('should throw UserOrEmailConflictError if username or email exists', async () => {
       mockRepository.findOne.mockResolvedValue(mockUser);
 
       await expect(service.create(createUserDto)).rejects.toThrow(
-        ConflictException,
+        UserOrEmailConflictError,
       );
     });
   });
@@ -95,11 +100,11 @@ describe('UsersService', () => {
       expect(result).toEqual(mockUser);
     });
 
-    it('should throw NotFoundException if user not found', async () => {
+    it('should throw UserNotFoundError if user not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
       await expect(service.findOne('nonexistent-id')).rejects.toThrow(
-        NotFoundException,
+        UserNotFoundError,
       );
     });
   });
@@ -145,15 +150,15 @@ describe('UsersService', () => {
       expect(result).toEqual(updatedUser);
     });
 
-    it('should throw NotFoundException if user not found', async () => {
+    it('should throw UserNotFoundError if user not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
       await expect(
         service.update('nonexistent-id', updateUserDto),
-      ).rejects.toThrow(NotFoundException);
+      ).rejects.toThrow(UserNotFoundError);
     });
 
-    it('should throw ConflictException if new username already exists', async () => {
+    it('should throw UsernameConflictError if new username already exists', async () => {
       const otherUser = { ...mockUser, id: 'other-id', username: 'existing' };
       mockRepository.findOne
         .mockResolvedValueOnce(mockUser) // findOne(id)
@@ -161,10 +166,10 @@ describe('UsersService', () => {
 
       await expect(
         service.update(mockUser.id, { username: 'existing' }),
-      ).rejects.toThrow(ConflictException);
+      ).rejects.toThrow(UsernameConflictError);
     });
 
-    it('should throw ConflictException if new email already exists', async () => {
+    it('should throw EmailConflictError if new email already exists', async () => {
       const otherUser = {
         ...mockUser,
         id: 'other-id',
@@ -176,7 +181,7 @@ describe('UsersService', () => {
 
       await expect(
         service.update(mockUser.id, { email: 'existing@example.com' }),
-      ).rejects.toThrow(ConflictException);
+      ).rejects.toThrow(EmailConflictError);
     });
   });
 
@@ -190,11 +195,11 @@ describe('UsersService', () => {
       expect(mockRepository.remove).toHaveBeenCalledWith(mockUser);
     });
 
-    it('should throw NotFoundException if user not found', async () => {
+    it('should throw UserNotFoundError if user not found', async () => {
       mockRepository.findOne.mockResolvedValue(null);
 
       await expect(service.remove('nonexistent-id')).rejects.toThrow(
-        NotFoundException,
+        UserNotFoundError,
       );
     });
   });

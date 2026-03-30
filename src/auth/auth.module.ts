@@ -11,6 +11,17 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { LocalStrategy } from './strategies/local.strategy';
 import { UsersModule } from '../users/users.module';
 import { AccessControlModule } from './access-control/access-control.module';
+import {
+  ValidateUserUseCase,
+  RegisterUseCase,
+  LoginUseCase,
+  UpdatePasswordUseCase,
+  UpdateUsernameUseCase,
+  SoftDeleteCredentialUseCase,
+  HardDeleteCredentialUseCase,
+  PasswordRecoveryUseCase,
+  ResetPasswordUseCase,
+} from './use-cases';
 
 @Module({
   imports: [
@@ -33,7 +44,20 @@ import { AccessControlModule } from './access-control/access-control.module';
     AccessControlModule,
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtStrategy, LocalStrategy],
+  providers: [
+    AuthService,
+    JwtStrategy,
+    LocalStrategy,
+    ValidateUserUseCase,
+    RegisterUseCase,
+    LoginUseCase,
+    UpdatePasswordUseCase,
+    UpdateUsernameUseCase,
+    SoftDeleteCredentialUseCase,
+    HardDeleteCredentialUseCase,
+    PasswordRecoveryUseCase,
+    ResetPasswordUseCase,
+  ],
   exports: [AuthService],
 })
 export class AuthModule {}
