@@ -1,12 +1,23 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ConflictException, NotFoundException } from '@nestjs/common';
 import { AccessControlService } from './access-control.service';
 import { Role } from './entities/role.entity';
 import { Permission } from './entities/permission.entity';
 import { Action } from './entities/action.entity';
 import { Source } from './entities/source.entity';
 import { UserRole } from './entities/user-role.entity';
+import {
+  RoleNotFoundError,
+  PermissionNotFoundError,
+  ActionNotFoundError,
+  SourceNotFoundError,
+  DuplicateRoleError,
+  DuplicatePermissionError,
+  DuplicateActionError,
+  DuplicateSourceError,
+  DuplicateAssignmentError,
+  AssociationNotFoundError,
+} from '../../common/errors';
 
 const mockRole: Partial<Role> = {
   id: '110e8400-e29b-41d4-a716-446655440000',
@@ -140,11 +151,11 @@ describe('AccessControlService', () => {
         expect(result).toEqual(mockRole);
       });
 
-      it('should throw ConflictException if role exists', async () => {
+      it('should throw DuplicateRoleError if role exists', async () => {
         mockRoleRepository.findOne.mockResolvedValue(mockRole);
 
         await expect(service.createRole({ name: 'admin' })).rejects.toThrow(
-          ConflictException,
+          DuplicateRoleError,
         );
       });
     });
@@ -168,11 +179,11 @@ describe('AccessControlService', () => {
         expect(result).toEqual(mockRole);
       });
 
-      it('should throw NotFoundException if role not found', async () => {
+      it('should throw RoleNotFoundError if role not found', async () => {
         mockRoleRepository.findOne.mockResolvedValue(null);
 
         await expect(service.findRoleById('nonexistent')).rejects.toThrow(
-          NotFoundException,
+          RoleNotFoundError,
         );
       });
     });
@@ -219,12 +230,12 @@ describe('AccessControlService', () => {
         expect(result).toEqual(mockPermission);
       });
 
-      it('should throw ConflictException if permission exists', async () => {
+      it('should throw DuplicatePermissionError if permission exists', async () => {
         mockPermissionRepository.findOne.mockResolvedValue(mockPermission);
 
         await expect(
           service.createPermission({ name: 'manage_users' }),
-        ).rejects.toThrow(ConflictException);
+        ).rejects.toThrow(DuplicatePermissionError);
       });
     });
 
@@ -247,11 +258,11 @@ describe('AccessControlService', () => {
         expect(result).toEqual(mockPermission);
       });
 
-      it('should throw NotFoundException if not found', async () => {
+      it('should throw PermissionNotFoundError if not found', async () => {
         mockPermissionRepository.findOne.mockResolvedValue(null);
 
         await expect(service.findPermissionById('nonexistent')).rejects.toThrow(
-          NotFoundException,
+          PermissionNotFoundError,
         );
       });
     });
@@ -298,11 +309,11 @@ describe('AccessControlService', () => {
         expect(result).toEqual(mockAction);
       });
 
-      it('should throw ConflictException if action exists', async () => {
+      it('should throw DuplicateActionError if action exists', async () => {
         mockActionRepository.findOne.mockResolvedValue(mockAction);
 
         await expect(service.createAction({ name: 'CREATE' })).rejects.toThrow(
-          ConflictException,
+          DuplicateActionError,
         );
       });
     });
@@ -326,11 +337,11 @@ describe('AccessControlService', () => {
         expect(result).toEqual(mockAction);
       });
 
-      it('should throw NotFoundException if not found', async () => {
+      it('should throw ActionNotFoundError if not found', async () => {
         mockActionRepository.findOne.mockResolvedValue(null);
 
         await expect(service.findActionById('nonexistent')).rejects.toThrow(
-          NotFoundException,
+          ActionNotFoundError,
         );
       });
     });
@@ -375,11 +386,11 @@ describe('AccessControlService', () => {
         expect(result).toEqual(mockSource);
       });
 
-      it('should throw ConflictException if source exists', async () => {
+      it('should throw DuplicateSourceError if source exists', async () => {
         mockSourceRepository.findOne.mockResolvedValue(mockSource);
 
         await expect(service.createSource({ name: 'users' })).rejects.toThrow(
-          ConflictException,
+          DuplicateSourceError,
         );
       });
     });
@@ -403,11 +414,11 @@ describe('AccessControlService', () => {
         expect(result).toEqual(mockSource);
       });
 
-      it('should throw NotFoundException if not found', async () => {
+      it('should throw SourceNotFoundError if not found', async () => {
         mockSourceRepository.findOne.mockResolvedValue(null);
 
         await expect(service.findSourceById('nonexistent')).rejects.toThrow(
-          NotFoundException,
+          SourceNotFoundError,
         );
       });
     });
@@ -456,13 +467,13 @@ describe('AccessControlService', () => {
         expect(result).toEqual(mockUserRole);
       });
 
-      it('should throw ConflictException if already assigned', async () => {
+      it('should throw DuplicateAssignmentError if already assigned', async () => {
         mockRoleRepository.findOne.mockResolvedValue(mockRole);
         mockUserRoleRepository.findOne.mockResolvedValue(mockUserRole);
 
         await expect(
           service.assignUserRole(mockUserRole.userId, mockUserRole.roleId),
-        ).rejects.toThrow(ConflictException);
+        ).rejects.toThrow(DuplicateAssignmentError);
       });
     });
 
@@ -478,12 +489,12 @@ describe('AccessControlService', () => {
         );
       });
 
-      it('should throw NotFoundException if not found', async () => {
+      it('should throw AssociationNotFoundError if not found', async () => {
         mockUserRoleRepository.findOne.mockResolvedValue(null);
 
         await expect(
           service.removeUserRole('userId', 'roleId'),
-        ).rejects.toThrow(NotFoundException);
+        ).rejects.toThrow(AssociationNotFoundError);
       });
     });
 
@@ -515,7 +526,7 @@ describe('AccessControlService', () => {
         expect(result.permissions).toHaveLength(1);
       });
 
-      it('should throw ConflictException if already assigned', async () => {
+      it('should throw DuplicateAssignmentError if already assigned', async () => {
         const roleWithPerms = {
           ...mockRole,
           permissions: [mockPermission],
@@ -525,7 +536,7 @@ describe('AccessControlService', () => {
 
         await expect(
           service.assignRolePermission(mockRole.id, mockPermission.id),
-        ).rejects.toThrow(ConflictException);
+        ).rejects.toThrow(DuplicateAssignmentError);
       });
     });
 
