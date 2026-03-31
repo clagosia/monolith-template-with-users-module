@@ -7,6 +7,7 @@ import {
   ValidateUserUseCase,
   RegisterUseCase,
   LoginUseCase,
+  GetProfileUseCase,
   UpdatePasswordUseCase,
   UpdateUsernameUseCase,
   SoftDeleteCredentialUseCase,
@@ -31,6 +32,7 @@ export class AuthService {
     private readonly validateUserUseCase: ValidateUserUseCase,
     private readonly registerUseCase: RegisterUseCase,
     private readonly loginUseCase: LoginUseCase,
+    private readonly getProfileUseCase: GetProfileUseCase,
     private readonly updatePasswordUseCase: UpdatePasswordUseCase,
     private readonly updateUsernameUseCase: UpdateUsernameUseCase,
     private readonly softDeleteCredentialUseCase: SoftDeleteCredentialUseCase,
@@ -59,6 +61,15 @@ export class AuthService {
   @HandleErrors([])
   async login(user: { id: string; username: string; email: string }) {
     return this.loginUseCase.execute(user);
+  }
+
+  @HandleErrors([])
+  async getProfile(user: {
+    userId: string;
+    username: string;
+    roles: string[];
+  }) {
+    return this.getProfileUseCase.execute(user);
   }
 
   @HandleErrors([CredentialNotFoundError, InvalidCurrentPasswordError])

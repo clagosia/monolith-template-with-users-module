@@ -4,6 +4,7 @@ import {
   ValidateUserUseCase,
   RegisterUseCase,
   LoginUseCase,
+  GetProfileUseCase,
   UpdatePasswordUseCase,
   UpdateUsernameUseCase,
   SoftDeleteCredentialUseCase,
@@ -35,6 +36,7 @@ describe('AuthService', () => {
   const mockValidateUserUseCase = { execute: jest.fn() };
   const mockRegisterUseCase = { execute: jest.fn() };
   const mockLoginUseCase = { execute: jest.fn() };
+  const mockGetProfileUseCase = { execute: jest.fn() };
   const mockUpdatePasswordUseCase = { execute: jest.fn() };
   const mockUpdateUsernameUseCase = { execute: jest.fn() };
   const mockSoftDeleteCredentialUseCase = { execute: jest.fn() };
@@ -49,6 +51,7 @@ describe('AuthService', () => {
         { provide: ValidateUserUseCase, useValue: mockValidateUserUseCase },
         { provide: RegisterUseCase, useValue: mockRegisterUseCase },
         { provide: LoginUseCase, useValue: mockLoginUseCase },
+        { provide: GetProfileUseCase, useValue: mockGetProfileUseCase },
         { provide: UpdatePasswordUseCase, useValue: mockUpdatePasswordUseCase },
         {
           provide: UpdateUsernameUseCase,
@@ -139,7 +142,7 @@ describe('AuthService', () => {
   });
 
   describe('login', () => {
-    it('should return an access token and user data', async () => {
+    it('should return an access token and user data with permissions', async () => {
       const expected = {
         accessToken: 'mock-jwt-token',
         user: {
@@ -147,6 +150,7 @@ describe('AuthService', () => {
           username: mockUser.username,
           email: mockUser.email,
           roles: [],
+          permissions: [],
         },
       };
       mockLoginUseCase.execute.mockResolvedValue(expected);
@@ -161,9 +165,10 @@ describe('AuthService', () => {
       expect(result).toHaveProperty('user');
       expect(result.user).toHaveProperty('id', mockUser.id);
       expect(result.user).toHaveProperty('username', mockUser.username);
+      expect(result.user).toHaveProperty('permissions');
     });
 
-    it('should include roles in the response', async () => {
+    it('should include roles and compiled permissions in the response', async () => {
       const expected = {
         accessToken: 'mock-jwt-token',
         user: {
@@ -171,6 +176,14 @@ describe('AuthService', () => {
           username: mockUser.username,
           email: mockUser.email,
           roles: ['admin'],
+          permissions: [
+            {
+              name: 'manage-users',
+              description: 'Manage users',
+              actions: ['create', 'read', 'update', 'delete'],
+              sources: ['users'],
+            },
+          ],
         },
       };
       mockLoginUseCase.execute.mockResolvedValue(expected);
@@ -182,6 +195,61 @@ describe('AuthService', () => {
       });
 
       expect(result.user.roles).toContain('admin');
+      expect(result.user.permissions).toHaveLength(1);
+      expect(result.user.permissions[0].name).toBe('manage-users');
+      expect(result.user.permissions[0].actions).toContain('create');
+      expect(result.user.permissions[0].sources).toContain('users');
+    });
+  });
+
+  describe('getProfile', () => {
+    it('should return user profile with roles and compiled permissions', async () => {
+      const expected = {
+        id: mockUser.id,
+        username: mockUser.username,
+        roles: ['admin'],
+        permissions: [
+          {
+            name: 'manage-users',
+            description: 'Manage users',
+            actions: ['create', 'read'],
+            sources: ['users'],
+          },
+        ],
+      };
+      mockGetProfileUseCase.execute.mockResolvedValue(expected);
+
+      const result = await service.getProfile({
+        userId: mockUser.id,
+        username: mockUser.username,
+        roles: ['admin'],
+      });
+
+      expect(result).toHaveProperty('id', mockUser.id);
+      expect(result).toHaveProperty('username', mockUser.username);
+      expect(result).toHaveProperty('roles');
+      expect(result.roles).toContain('admin');
+      expect(result).toHaveProperty('permissions');
+      expect(result.permissions).toHaveLength(1);
+    });
+
+    it('should return empty permissions if user has no roles', async () => {
+      const expected = {
+        id: mockUser.id,
+        username: mockUser.username,
+        roles: [],
+        permissions: [],
+      };
+      mockGetProfileUseCase.execute.mockResolvedValue(expected);
+
+      const result = await service.getProfile({
+        userId: mockUser.id,
+        username: mockUser.username,
+        roles: [],
+      });
+
+      expect(result.roles).toHaveLength(0);
+      expect(result.permissions).toHaveLength(0);
     });
   });
 

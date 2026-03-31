@@ -1,9 +1,11 @@
 export { ValidateUserUseCase } from './validate-user.use-case';
 export { RegisterUseCase } from './register.use-case';
 export { LoginUseCase } from './login.use-case';
+export { GetProfileUseCase } from './get-profile.use-case';
 export { UpdatePasswordUseCase } from './update-password.use-case';
 export { UpdateUsernameUseCase } from './update-username.use-case';
 export { SoftDeleteCredentialUseCase } from './soft-delete-credential.use-case';
 export { HardDeleteCredentialUseCase } from './hard-delete-credential.use-case';
 export { PasswordRecoveryUseCase } from './password-recovery.use-case';
 export { ResetPasswordUseCase } from './reset-password.use-case';
+export { CompiledPermission } from './login.use-case';
