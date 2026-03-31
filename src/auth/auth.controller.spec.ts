@@ -8,6 +8,7 @@ describe('AuthController', () => {
   const mockAuthService = {
     register: jest.fn(),
     login: jest.fn(),
+    getProfile: jest.fn(),
     passwordRecovery: jest.fn(),
     resetPassword: jest.fn(),
     updatePassword: jest.fn(),
@@ -56,16 +57,59 @@ describe('AuthController', () => {
   });
 
   describe('login', () => {
-    it('should login a user', async () => {
+    it('should login a user and return roles and permissions', async () => {
       const req = {
         user: { id: '1', username: 'johndoe', email: 'john@example.com' },
       };
-      const expected = { accessToken: 'token', user: req.user };
+      const expected = {
+        accessToken: 'token',
+        user: {
+          ...req.user,
+          roles: ['admin'],
+          permissions: [
+            {
+              name: 'manage-users',
+              description: 'Manage users',
+              actions: ['create', 'read'],
+              sources: ['users'],
+            },
+          ],
+        },
+      };
       mockAuthService.login.mockResolvedValue(expected);
 
       const result = await controller.login(req);
 
       expect(result).toEqual(expected);
+      expect(result.user.roles).toContain('admin');
+      expect(result.user.permissions).toHaveLength(1);
+    });
+  });
+
+  describe('getProfile', () => {
+    it('should return the current user profile with roles and permissions', async () => {
+      const req = {
+        user: { userId: '1', username: 'johndoe', roles: ['admin'] },
+      };
+      const expected = {
+        id: '1',
+        username: 'johndoe',
+        roles: ['admin'],
+        permissions: [
+          {
+            name: 'manage-users',
+            description: 'Manage users',
+            actions: ['create', 'read'],
+            sources: ['users'],
+          },
+        ],
+      };
+      mockAuthService.getProfile.mockResolvedValue(expected);
+
+      const result = await controller.getProfile(req);
+
+      expect(result).toEqual(expected);
+      expect(mockAuthService.getProfile).toHaveBeenCalledWith(req.user);
     });
   });
 

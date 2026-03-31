@@ -1,5 +1,6 @@
 import {
   Controller,
+  Get,
   Post,
   Body,
   Patch,
@@ -39,6 +40,16 @@ export class AuthController {
     @Request() req: { user: { id: string; username: string; email: string } },
   ) {
     return this.authService.login(req.user);
+  }
+
+  @Get('me')
+  getProfile(
+    @Request()
+    req: {
+      user: { userId: string; username: string; roles: string[] };
+    },
+  ) {
+    return this.authService.getProfile(req.user);
   }
 
   @Public()
